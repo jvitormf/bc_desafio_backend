@@ -5,12 +5,9 @@ import User from '../models/User';
 
 class MeetupController {
     async index(req, res) {
-        const meetups = await Meetup.findAll({
-            where: { user_id: req.userId },
-            order: ['date'],
-        });
+        const user = req.body;
 
-        return res.json(meetups);
+        return res.json();
     }
 
     async store(req, res) {
@@ -84,15 +81,15 @@ class MeetupController {
             return res.status(400).json({ error: 'Validation failed!' });
         }
 
-        const planner = await Meetup.findByPk(req.params.id);
+        const meetup = await Meetup.findByPk(req.params.id);
 
-        if (planner.planner_id !== req.userId) {
+        if (meetup.planner_id !== req.userId) {
             return res.status(401).json({
                 error: 'You do not have permission to update this Meetup!',
             });
         }
 
-        const { planner_id, title, description, location, date } = req.body;
+        const { date } = req.body;
 
         // check for past dates
         const hourStart = startOfHour(parseISO(date));
@@ -103,37 +100,17 @@ class MeetupController {
             });
         }
 
-        // check Availability
-        const checkAvailability = await Meetup.findOne({
-            where: {
-                planner_id,
-                date: hourStart,
-            },
+        const { id, title, description, location } = await meetup.update(
+            req.body
+        );
+
+        return res.json({
+            id,
+            title,
+            description,
+            location,
+            date,
         });
-
-        if (checkAvailability) {
-            return res
-                .status(400)
-                .json({ error: 'Meetup date is not available!' });
-        }
-
-        try {
-            const meetup = await Meetup.update(
-                {
-                    title,
-                    description,
-                    location,
-                    date: hourStart,
-                },
-                {
-                    where: { id: req.params.id },
-                }
-            );
-
-            return res.json(meetup);
-        } catch (err) {
-            return res.json({ error: 'Update failed!' });
-        }
     }
 
     async delete(req, res) {
@@ -145,15 +122,6 @@ class MeetupController {
             });
         }
 
-        // check for past dates
-        const hourStart = startOfHour(parseISO(meetup.date));
-
-        if (isBefore(hourStart, new Date())) {
-            return res.status(400).json({
-                error: 'Past dates are not permitted!',
-            });
-        }
-
         const dateWithSub = subHours(meetup.date, 2);
 
         if (isBefore(dateWithSub, new Date())) {
@@ -162,14 +130,9 @@ class MeetupController {
             });
         }
 
-        try {
-            const meetupDelete = Meetup.destroy({
-                where: { id: meetup.id },
-            });
-            return res.json(meetupDelete);
-        } catch (err) {
-            return res.json({ error: 'Meetup delete failed!' });
-        }
+        meetup.destroy();
+
+        return res.status(200).json({ msg: 'Meetup canceled!' });
     }
 }
 
