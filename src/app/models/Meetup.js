@@ -23,6 +23,11 @@ class Meetup extends Model {
             as: 'planner',
         });
         this.belongsTo(models.File, { foreignKey: 'banner_id', as: 'banner' });
+        this.belongsToMany(models.User, {
+            through: 'meetups_users',
+            as: 'users',
+            foreignKey: 'user_id',
+        });
     }
 }
 

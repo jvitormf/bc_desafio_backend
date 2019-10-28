@@ -16,17 +16,17 @@ class MeetupController {
             description: Yup.string().required(),
             location: Yup.string().required(),
             date: Yup.date().required(),
-            planner_id: Yup.number().required(),
         });
 
         if (!(await schema.isValid(req.body))) {
             return res.status(400).json({ error: 'Validation failed!' });
         }
 
-        const { planner_id, title, description, location, date } = req.body;
+        const { title, description, location, date } = req.body;
+        const planner = req.userId;
 
         const isPlanner = await User.findOne({
-            where: { id: planner_id, planner: true },
+            where: { id: planner, planner: true },
         });
 
         if (!isPlanner) {
@@ -47,7 +47,7 @@ class MeetupController {
         // check Availability
         const checkAvailability = await Meetup.findOne({
             where: {
-                planner_id,
+                planner_id: planner,
                 date: hourStart,
             },
         });
@@ -58,13 +58,10 @@ class MeetupController {
                 .json({ error: 'Meetup date is not available!' });
         }
 
-        const meetup = await Meetup.create({
-            title,
-            description,
-            location,
-            date: hourStart,
-            planner_id,
-        });
+        const data = req.body;
+        data.planner_id = planner;
+
+        const meetup = await Meetup.create(data);
 
         return res.json(meetup);
     }
