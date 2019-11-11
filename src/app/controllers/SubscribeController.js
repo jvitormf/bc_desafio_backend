@@ -8,23 +8,29 @@ class SubscribeController {
     async index(req, res) {
         const user = await User.findByPk(req.userId);
 
-        const subscribeList = await Meetup.findAll({
-            // where: {
-            //     planner_id: {
-            //         $notIn: user.id,
-            //     },
-            // },
-            attributes: ['id', 'title', 'description', 'location', 'date'],
-            include: [
-                {
-                    model: User,
-                    as: 'planner',
-                    attributes: ['name'],
+        try {
+            const subscribeList = await Meetup.findAll({
+                where: {
+                    planner_id: {
+                        [Op.ne]: user.id,
+                    },
                 },
-            ],
-        });
+                attributes: ['id', 'title', 'description', 'location', 'date'],
+                include: [
+                    {
+                        model: User,
+                        as: 'planner',
+                        attributes: ['id', 'name'],
+                    },
+                ],
+            });
 
-        return res.json(subscribeList);
+            return res.json(subscribeList);
+        } catch (error) {
+            return res.json(error);
+        }
+
+        // return res.json(subscribeList);
     }
 
     async store(req, res) {
