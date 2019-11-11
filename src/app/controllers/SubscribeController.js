@@ -29,8 +29,6 @@ class SubscribeController {
         } catch (error) {
             return res.json(error);
         }
-
-        // return res.json(subscribeList);
     }
 
     async store(req, res) {
