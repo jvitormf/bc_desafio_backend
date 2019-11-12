@@ -1,4 +1,4 @@
-import Op from 'sequelize';
+import { Op } from 'sequelize';
 import { isBefore } from 'date-fns';
 
 import Meetup from '../models/Meetup';
